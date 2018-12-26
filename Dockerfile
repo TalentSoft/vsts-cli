@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See License.txt in the project root for license information.
 #---------------------------------------------------------------------------------------------
 
-FROM python:3.6.3-alpine
+FROM python:3.6.3-stretch
 
 ARG CLI_VERSION
 ARG BUILD_DATE
@@ -22,19 +22,21 @@ LABEL maintainer="Microsoft" \
       org.label-schema.vcs-url="https://github.com/Microsoft/vsts-cli.git" \
       org.label-schema.docker.cmd="docker run -v \${HOME}/.vsts:/root/.vsts -it microsoft/vsts-cli:$CLI_VERSION"
 
-WORKDIR vsts-cli
-COPY . /vsts-cli
-
 # Install dependencies. Most of these are needed for building and setup.
 # bash gcc make openssl-dev libffi-dev musl-dev - dependencies required for CLI
 #  jq - we include jq as a useful tool
 #  openssh - included for ssh-keygen
 #  ca-certificates
-RUN apk add --no-cache bash gcc make openssl-dev libffi-dev musl-dev jq openssh \
-                       ca-certificates wget openssl git && update-ca-certificates
+# RUN apk add --no-cache bash gcc make openssl-dev libffi-dev musl-dev jq openssh \
+#                        ca-certificates wget openssl git && update-ca-certificates
+RUN apt-get update && apt-get install -y bash gcc make libssl1.0.2 libssl-dev libffi-dev musl-dev jq libicu57 libunwind8 ca-certificates wget git
+RUN update-ca-certificates
 
 # Install the VSTS Python API package
 RUN pip install vsts --upgrade --no-cache-dir --extra-index-url https://vstscli.azurewebsites.net
+
+WORKDIR vsts-cli
+COPY . /vsts-cli
 
 # Install the VSTS CLI packages
  RUN pip install \
